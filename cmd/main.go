@@ -1,9 +1,11 @@
 package main
 
 import (
+	"cards-service/internal/config"
 	"log"
 
 	"github.com/mwinyimoha/commons/pkg/logging"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -15,4 +17,11 @@ func main() {
 	}
 
 	defer logger.Sync()
+
+	cfg, err := config.New()
+	if err != nil {
+		logger.Fatal("could not initialize app config", zap.String("original_error", err.Error()))
+	}
+
+	logger.Info("configuration loaded successfully", zap.Any("config", cfg))
 }
