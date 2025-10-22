@@ -2,6 +2,7 @@ package main
 
 import (
 	"cards-service/internal/config"
+	"cards-service/internal/core/app"
 	"log"
 
 	"github.com/mwinyimoha/commons/pkg/logging"
@@ -24,4 +25,9 @@ func main() {
 	}
 
 	logger.Info("configuration loaded successfully", zap.Any("config", cfg))
+
+	_, err = app.NewService()
+	if err != nil {
+		logger.Fatal("could not initialize service", zap.String("original_error", err.Error()))
+	}
 }
