@@ -1,0 +1,44 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: "${{ secrets.SA_CREDENTIALS }}"
+
+      - name: "Docker auth"
+        run: |-
+          gcloud auth configure-docker ${{ secrets.REGISTRY }} --quiet
+
+      - name: Build tag
+        run: |-
+          echo "IMAGE_TAG=${{ secrets.REGISTRY }}/${{ secrets.PROJECT_ID }}/${{ secrets.ART_REPOSITORY }}/${{ secrets.APP_NAME}}:${{ github.sha }}" >> "$GITHUB_ENV"
+
+      - name: Build and Push
+        run: |-
+          docker build -t "${{ env.IMAGE_TAG }}" ./
+          docker push "${{ env.IMAGE_TAG }}"
+
+      - name: Deploy 
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v3
+        with:
+          project_id: ${{ secrets.PROJECT_ID }}
+          service: ${{ secrets.APP_NAME }}
+          region: ${{ secrets.CLOUDRUN_REGION }}
+          image: ${{ env.IMAGE_TAG }}
+
+      - name: Show Output
+        run: echo ${{ steps.deploy.outputs.url }}
