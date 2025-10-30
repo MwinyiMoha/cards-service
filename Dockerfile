@@ -11,8 +11,7 @@ RUN apt-get update && \
     chmod +x /usr/local/bin/upx && \
     apt-get remove -y xz-utils && \
     rm -rf /var/lib/apt/lists/* && \
-    useradd -u 10001 app && \
-    touch config.env
+    useradd -u 10001 app
 
 COPY . .
 
@@ -26,8 +25,6 @@ FROM scratch AS final
 ARG WEB_PORT=8080
 
 COPY --from=builder /etc/passwd /etc/passwd
-
-COPY --from=builder /app/config.env .
 
 COPY --from=builder /app/build .
 
