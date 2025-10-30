@@ -29,24 +29,24 @@ func main() {
 
 	logger, err := logging.NewLoggerConfig().BuildLogger()
 	if err != nil {
-		log.Fatal("could not initialize logging", err)
+		log.Fatal("could not initialize logging:", err)
 	}
 
-	defer logger.Sync()
+	defer func() { _ = logger.Sync() }()
 
 	cfg, err := config.New()
 	if err != nil {
-		logger.Fatal("could not initialize app config", zap.String("original_error", err.Error()))
+		logger.Fatal("could not initialize configuration", zap.Error(err))
 	}
 
 	svc, err := app.NewService()
 	if err != nil {
-		logger.Fatal("could not initialize service", zap.String("original_error", err.Error()))
+		logger.Fatal("could not initialize service", zap.Error(err))
 	}
 
 	validator, err := protovalidate.New()
 	if err != nil {
-		logger.Fatal("could not initialize request validator", zap.String("original_error", err.Error()))
+		logger.Fatal("could not initialize request validator", zap.Error(err))
 	}
 
 	s := grpc.NewServer(
@@ -60,39 +60,47 @@ func main() {
 	srv := api.NewServer(svc)
 	pb.RegisterCardsServiceServer(s, srv)
 
-	healthsrv := health.NewServer()
-	healthpb.RegisterHealthServer(s, healthsrv)
+	healthSrv := health.NewServer()
+	healthpb.RegisterHealthServer(s, healthSrv)
 
 	reflection.Register(s)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", cfg.ServerPort))
 	if err != nil {
-		logger.Fatal("could not bind port", zap.String("original_error", err.Error()))
+		logger.Fatal("could not bind port", zap.Error(err))
 	}
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
+	sigCh := make(chan os.Signal, 1)
+	errCh := make(chan error, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
-	go func(c chan os.Signal) {
+	go func() {
 		logger.Info(
 			"starting gRPC server",
 			zap.String("service_name", cfg.ServiceName),
 			zap.String("service_version", cfg.ServiceVersion),
-			zap.Int("port", cfg.ServerPort),
+			zap.Int("server_port", cfg.ServerPort),
+			zap.Bool("debug_mode", cfg.Debug),
 		)
 
+		healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 		if err := s.Serve(lis); err != nil {
-			logger.Error("could not start server", zap.String("original_error", err.Error()))
-			c <- syscall.SIGTERM
+			errCh <- err
 		}
-	}(ch)
-
-	received := <-ch
-
-	func() {
-		logger.Info("initiating graceful shutdown", zap.String("os_signal", received.String()))
-
-		s.GracefulStop()
-
 	}()
+
+	select {
+	case signal := <-sigCh:
+		logger.Info("initiating graceful shutdown", zap.String("signal", signal.String()))
+
+		healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
+		s.GracefulStop()
+	case err = <-errCh:
+		logger.Error("server stopped unexpectedly", zap.Error(err))
+
+		healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
+		s.Stop()
+	}
+
+	logger.Info("server stopped")
 }
