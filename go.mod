@@ -9,7 +9,7 @@ require (
 	github.com/go-playground/validator/v10 v10.28.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/mwinyimoha/commons v0.1.0-61c0b58
-	github.com/mwinyimoha/protos/gen/go v0.0.0-20251021162726-db01bcbaba8f
+	github.com/mwinyimoha/protos/gen/go v0.0.0-20251107163326-a7c265ad4b22
 	github.com/spf13/viper v1.21.0
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.76.0

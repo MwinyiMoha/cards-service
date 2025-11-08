@@ -23,7 +23,6 @@ const (
 	AppsService_GetApps_FullMethodName   = "/apps.v1.AppsService/GetApps"
 	AppsService_GetApp_FullMethodName    = "/apps.v1.AppsService/GetApp"
 	AppsService_RotateKey_FullMethodName = "/apps.v1.AppsService/RotateKey"
-	AppsService_DecodeKey_FullMethodName = "/apps.v1.AppsService/DecodeKey"
 	AppsService_DeleteApp_FullMethodName = "/apps.v1.AppsService/DeleteApp"
 )
 
@@ -35,7 +34,6 @@ type AppsServiceClient interface {
 	GetApps(ctx context.Context, in *GetAppsRequest, opts ...grpc.CallOption) (*GetAppsResponse, error)
 	GetApp(ctx context.Context, in *GetAppRequest, opts ...grpc.CallOption) (*GetAppResponse, error)
 	RotateKey(ctx context.Context, in *RotateKeyRequest, opts ...grpc.CallOption) (*RotateKeyResponse, error)
-	DecodeKey(ctx context.Context, in *DecodeKeyRequest, opts ...grpc.CallOption) (*DecodeKeyResponse, error)
 	DeleteApp(ctx context.Context, in *DeleteAppRequest, opts ...grpc.CallOption) (*DeleteAppResponse, error)
 }
 
@@ -83,15 +81,6 @@ func (c *appsServiceClient) RotateKey(ctx context.Context, in *RotateKeyRequest,
 	return out, nil
 }
 
-func (c *appsServiceClient) DecodeKey(ctx context.Context, in *DecodeKeyRequest, opts ...grpc.CallOption) (*DecodeKeyResponse, error) {
-	out := new(DecodeKeyResponse)
-	err := c.cc.Invoke(ctx, AppsService_DecodeKey_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *appsServiceClient) DeleteApp(ctx context.Context, in *DeleteAppRequest, opts ...grpc.CallOption) (*DeleteAppResponse, error) {
 	out := new(DeleteAppResponse)
 	err := c.cc.Invoke(ctx, AppsService_DeleteApp_FullMethodName, in, out, opts...)
@@ -109,7 +98,6 @@ type AppsServiceServer interface {
 	GetApps(context.Context, *GetAppsRequest) (*GetAppsResponse, error)
 	GetApp(context.Context, *GetAppRequest) (*GetAppResponse, error)
 	RotateKey(context.Context, *RotateKeyRequest) (*RotateKeyResponse, error)
-	DecodeKey(context.Context, *DecodeKeyRequest) (*DecodeKeyResponse, error)
 	DeleteApp(context.Context, *DeleteAppRequest) (*DeleteAppResponse, error)
 	mustEmbedUnimplementedAppsServiceServer()
 }
@@ -129,9 +117,6 @@ func (UnimplementedAppsServiceServer) GetApp(context.Context, *GetAppRequest) (*
 }
 func (UnimplementedAppsServiceServer) RotateKey(context.Context, *RotateKeyRequest) (*RotateKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RotateKey not implemented")
-}
-func (UnimplementedAppsServiceServer) DecodeKey(context.Context, *DecodeKeyRequest) (*DecodeKeyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DecodeKey not implemented")
 }
 func (UnimplementedAppsServiceServer) DeleteApp(context.Context, *DeleteAppRequest) (*DeleteAppResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteApp not implemented")
@@ -221,24 +206,6 @@ func _AppsService_RotateKey_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AppsService_DecodeKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DecodeKeyRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AppsServiceServer).DecodeKey(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AppsService_DecodeKey_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AppsServiceServer).DecodeKey(ctx, req.(*DecodeKeyRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _AppsService_DeleteApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteAppRequest)
 	if err := dec(in); err != nil {
@@ -279,10 +246,6 @@ var AppsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RotateKey",
 			Handler:    _AppsService_RotateKey_Handler,
-		},
-		{
-			MethodName: "DecodeKey",
-			Handler:    _AppsService_DecodeKey_Handler,
 		},
 		{
 			MethodName: "DeleteApp",
