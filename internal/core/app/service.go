@@ -11,11 +11,10 @@ type Service struct {
 	validation *validator.Validate
 }
 
-func NewService(val *validator.Validate) (*Service, error) {
-	registerValidators(val)
-	return &Service{
-		validation: val,
-	}, nil
+func NewService(val *validator.Validate) *Service {
+	val.RegisterValidation("valid_card_number", validateCardNumber)
+
+	return &Service{validation: val}
 }
 
 func (svc *Service) ValidateCardNumber(cardNumber string) (*domain.CardInfo, error) {

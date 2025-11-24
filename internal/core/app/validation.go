@@ -8,10 +8,6 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func registerValidators(val *validator.Validate) {
-	val.RegisterValidation("valid_card_number", validateCardNumber)
-}
-
 func validateCardNumber(fl validator.FieldLevel) bool {
 	val := fl.Field().String()
 
