@@ -30,5 +30,5 @@ func (svc *Service) ValidateCardNumber(cardNumber string) (*domain.CardInfo, err
 		return nil, errors.WrapError(err, errors.Internal, "validation failed")
 	}
 
-	return domain.NewCardInfo(cardNumber), nil
+	return domain.NewCardInfo(cardNumber)
 }
