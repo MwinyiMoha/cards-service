@@ -1,23 +1,23 @@
 package config
 
 import (
-	"os"
-	"strconv"
+	"cards-service/internal/core/ports"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/mwinyimoha/commons/pkg/errors"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	ServiceName    string `mapstructure:"SERVICE_NAME"`
-	ServiceVersion string `mapstructure:"SERVICE_VERSION"`
+	ServiceName    string `mapstructure:"SERVICE_NAME" validate:"required"`
+	ServiceVersion string `mapstructure:"SERVICE_VERSION" validate:"required"`
 	AppID          string `mapstructure:"APP_ID"`
 	Debug          bool   `mapstructure:"DEBUG"`
-	ServerPort     int    `mapstructure:"SERVER_PORT"`
-	DefaultTimeout int    `mapstructure:"DEFAULT_TIMEOUT"`
+	ServerPort     int    `mapstructure:"SERVER_PORT" validate:"required,min=1,max=65535"`
+	DefaultTimeout int    `mapstructure:"DEFAULT_TIMEOUT" validate:"required,min=1"`
 }
 
-func New() (*Config, error) {
+func New(val ports.AppValidator) (*Config, error) {
 	v := viper.New()
 	v.SetConfigType("env")
 
@@ -30,20 +30,10 @@ func New() (*Config, error) {
 
 	v.AutomaticEnv()
 
-	debug := true
-	if raw := os.Getenv("DEBUG"); raw != "" {
-		val, err := strconv.ParseBool(raw)
-		if err == nil {
-			debug = val
-		}
-	}
-
-	if debug {
-		configPath := "./"
-		v.AddConfigPath(configPath)
-
-		if err := v.ReadInConfig(); err != nil {
-			return nil, errors.WrapError(err, errors.Internal, "failed to load configuration file (DEBUG=true)")
+	v.AddConfigPath("./")
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return nil, errors.WrapError(err, errors.Internal, "failed to load configuration file")
 		}
 	}
 
@@ -52,24 +42,21 @@ func New() (*Config, error) {
 		return nil, errors.WrapError(err, errors.Internal, "failed to unmarshal config")
 	}
 
-	if err := cfg.Validate(); err != nil {
+	if err := cfg.validate(val); err != nil {
 		return nil, err
 	}
 
 	return &cfg, nil
 }
 
-func (c *Config) Validate() error {
-	if c.ServiceName == "" {
-		return errors.NewErrorf(errors.Internal, "SERVICE_NAME must be set")
-	}
+func (c *Config) validate(v ports.AppValidator) error {
+	if err := v.Struct(c); err != nil {
+		if verr, ok := err.(validator.ValidationErrors); ok {
+			violations := errors.BuildViolations(verr)
+			return errors.NewValidationError(violations)
+		}
 
-	if c.ServerPort <= 0 || c.ServerPort > 65535 {
-		return errors.NewErrorf(errors.Internal, "invalid SERVER_PORT value")
-	}
-
-	if c.DefaultTimeout <= 0 {
-		return errors.NewErrorf(errors.Internal, "DEFAULT_TIMEOUT must be > 0")
+		return errors.WrapError(err, errors.Internal, "config validation failed")
 	}
 
 	return nil

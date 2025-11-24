@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"buf.build/go/protovalidate"
+	"github.com/go-playground/validator/v10"
 	grpclogging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	reqvalidator "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
@@ -34,15 +35,13 @@ func main() {
 
 	defer func() { _ = logger.Sync() }()
 
-	cfg, err := config.New()
+	val := validator.New()
+	cfg, err := config.New(val)
 	if err != nil {
 		logger.Fatal("could not initialize configuration", zap.Error(err))
 	}
 
-	svc, err := app.NewService()
-	if err != nil {
-		logger.Fatal("could not initialize service", zap.Error(err))
-	}
+	svc := app.NewService(val)
 
 	validator, err := protovalidate.New()
 	if err != nil {
