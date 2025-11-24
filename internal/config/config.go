@@ -1,6 +1,8 @@
 package config
 
 import (
+	"cards-service/internal/core/ports"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/mwinyimoha/commons/pkg/errors"
 	"github.com/spf13/viper"
@@ -10,12 +12,12 @@ type Config struct {
 	ServiceName    string `mapstructure:"SERVICE_NAME" validate:"required"`
 	ServiceVersion string `mapstructure:"SERVICE_VERSION" validate:"required"`
 	AppID          string `mapstructure:"APP_ID"`
-	Debug          bool   `mapstructure:"DEBUG" validate:"required"`
+	Debug          bool   `mapstructure:"DEBUG"`
 	ServerPort     int    `mapstructure:"SERVER_PORT" validate:"required,min=1,max=65535"`
 	DefaultTimeout int    `mapstructure:"DEFAULT_TIMEOUT" validate:"required,min=1"`
 }
 
-func New(val *validator.Validate) (*Config, error) {
+func New(val ports.AppValidator) (*Config, error) {
 	v := viper.New()
 	v.SetConfigType("env")
 
@@ -28,15 +30,10 @@ func New(val *validator.Validate) (*Config, error) {
 
 	v.AutomaticEnv()
 
-	debug := v.GetBool("DEBUG")
-	if debug {
-		configPath := "./"
-		v.AddConfigPath(configPath)
-
-		if err := v.ReadInConfig(); err != nil {
-			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-				return nil, errors.WrapError(err, errors.Internal, "failed to load configuration file")
-			}
+	v.AddConfigPath("./")
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return nil, errors.WrapError(err, errors.Internal, "failed to load configuration file")
 		}
 	}
 
@@ -52,7 +49,7 @@ func New(val *validator.Validate) (*Config, error) {
 	return &cfg, nil
 }
 
-func (c *Config) validate(v *validator.Validate) error {
+func (c *Config) validate(v ports.AppValidator) error {
 	if err := v.Struct(c); err != nil {
 		if verr, ok := err.(validator.ValidationErrors); ok {
 			violations := errors.BuildViolations(verr)
