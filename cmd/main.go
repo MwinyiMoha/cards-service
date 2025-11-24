@@ -41,10 +41,7 @@ func main() {
 		logger.Fatal("could not initialize configuration", zap.Error(err))
 	}
 
-	svc, err := app.NewService(val)
-	if err != nil {
-		logger.Fatal("could not initialize service", zap.Error(err))
-	}
+	svc := app.NewService(val)
 
 	validator, err := protovalidate.New()
 	if err != nil {

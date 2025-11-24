@@ -79,8 +79,8 @@ func TestValidationFails(t *testing.T) {
 		assert.Nil(t, cfg)
 		require.Error(t, err)
 
-		_, ok := err.(*errors.ValidationError)
-		assert.True(t, ok, "expected ValidationError type")
+		_, ok := err.(*errors.Error)
+		assert.True(t, ok, "expected custom error type")
 	})
 
 	t.Run("Invalid Field Value", func(t *testing.T) {
@@ -95,8 +95,8 @@ func TestValidationFails(t *testing.T) {
 		assert.Nil(t, cfg)
 		require.Error(t, err)
 
-		_, ok := err.(*errors.ValidationError)
-		assert.True(t, ok, "expected ValidationError type")
+		_, ok := err.(*errors.Error)
+		assert.True(t, ok, "expected custom error type")
 	})
 
 	t.Run("Generic Error", func(t *testing.T) {
