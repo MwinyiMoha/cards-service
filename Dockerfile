@@ -1,6 +1,7 @@
 FROM golang:1.24-bookworm AS builder
 
 ARG UPX_VERSION=4.2.4
+ARG USER_ID=10001
 
 WORKDIR /app
 
@@ -11,7 +12,7 @@ RUN apt-get update && \
     chmod +x /usr/local/bin/upx && \
     apt-get remove -y xz-utils && \
     rm -rf /var/lib/apt/lists/* && \
-    useradd -u 10001 app
+    useradd -u ${USER_ID} app
 
 COPY . .
 
