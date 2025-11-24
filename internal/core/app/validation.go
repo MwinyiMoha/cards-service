@@ -6,17 +6,10 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/mwinyimoha/commons/pkg/errors"
 )
 
-func createValidator() (*validator.Validate, error) {
-	v := validator.New()
-
-	if err := v.RegisterValidation("valid_card_number", validateCardNumber); err != nil {
-		return nil, errors.WrapError(err, errors.Internal, "failed to register validation")
-	}
-
-	return v, nil
+func registerValidators(val *validator.Validate) {
+	val.RegisterValidation("valid_card_number", validateCardNumber)
 }
 
 func validateCardNumber(fl validator.FieldLevel) bool {
